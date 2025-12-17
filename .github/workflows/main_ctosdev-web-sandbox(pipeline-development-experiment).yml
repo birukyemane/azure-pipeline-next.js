@@ -23,23 +23,17 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build
+      - name: npm install, build, and test
         run: |
           npm install
-          npm run build
-
-      # Standalone mode needs the static and public files copied manually
-      - name: Prepare Standalone Bundle
-        run: |
-          cp -r public .next/standalone/public
-          cp -r .next/static .next/standalone/.next/static
+          npm run build --if-present
+          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # Only upload the standalone folder
-          path: .next/standalone
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -58,4 +52,4 @@ jobs:
           app-name: 'ctosdev-web-sandbox'
           slot-name: 'pipeline-development-experiment'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7BAE482963F3495D9779C157626F0369 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_335E52B9B27C4201B239B36392EEA5F7 }}
