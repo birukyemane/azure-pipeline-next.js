@@ -5,7 +5,7 @@ export default function ClientInfo() {
     <div style={{ marginTop: "20px" }}>
       <p>
         <strong>Client-side app name:</strong>{" "}
-        {process.env.NEXT_PUBLIC_APP_NAME}
+        {process.env.NEXT_PUBLIC_APP_NAME || "❌ Not available"}
       </p>
 
       <p>
