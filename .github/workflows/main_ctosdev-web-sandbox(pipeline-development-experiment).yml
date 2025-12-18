@@ -11,26 +11,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - uses: actions/checkout@v4
 
+      # 2️⃣ Setup Node 22
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # 4️⃣ Build the Next.js app
       - name: Build Next.js
         run: npm run build
 
+      # 5️⃣ Verify the build artifacts
       - name: Verify build output
         run: ls -la .next
 
+      # 6️⃣ Deploy full app folder to Azure
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'ctosdev-web-sandbox'
           slot-name: 'pipeline-development-experiment'
-          package: .
+          package: .  # deploy everything including .next
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7BAE482963F3495D9779C157626F0369 }}
