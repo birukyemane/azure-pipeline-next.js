@@ -82,5 +82,5 @@ stages:
               azureSubscription: 'Enterprise Dev/Test'
               appType: 'webAppLinux'
               appName: 'ctosdev-web-sandbox'
-              slotName: 'ctosdev-web-sandbox-pipeline-development-experiment'
+              slotName: 'pipeline-development-experiment'
               package: '$(Pipeline.Workspace)/$(buildArtifactName)/app.zip'
