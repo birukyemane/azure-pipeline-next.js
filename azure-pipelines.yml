@@ -21,16 +21,23 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    # 1️⃣ Setup Node.js
     - task: NodeTool@0
       displayName: 'Setup Node.js'
       inputs:
         versionSpec: $(nodeVersion)
 
+    # 2️⃣ Install pnpm globally
+    - script: npm install -g pnpm
+      displayName: 'Install pnpm'
+
+    # 3️⃣ Install dependencies and build with pnpm
     - script: |
-        npm ci
-        npm run build
+        pnpm install
+        pnpm run build
       displayName: 'Install dependencies and build'
 
+    # 4️⃣ Zip the full app for deployment
     - task: ArchiveFiles@2
       displayName: 'Zip entire app for deployment'
       inputs:
@@ -40,6 +47,7 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
         replaceExistingArchive: true
 
+    # 5️⃣ Publish the artifact
     - task: PublishPipelineArtifact@1
       displayName: 'Publish Build Artifact'
       inputs:
@@ -60,12 +68,14 @@ stages:
       runOnce:
         deploy:
           steps:
+          # 6️⃣ Download the build artifact
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Build Artifact'
             inputs:
               artifactName: $(buildArtifactName)
               path: '$(Pipeline.Workspace)'
 
+          # 7️⃣ Deploy to Azure Web App Slot
           - task: AzureWebApp@1
             displayName: 'Deploy to Azure Web App Slot'
             inputs:
