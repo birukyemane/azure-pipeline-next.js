@@ -1,86 +1,72 @@
-# Trigger pipeline on main branch
 trigger:
   branches:
     include:
       - main
-pr:
-  branches:
-    include:
-      - main
+
+pool:
+  vmImage: ubuntu-latest
 
 variables:
   nodeVersion: '22.x'
   buildArtifactName: 'ctos-web-build'
+  slotName: 'pipeline-development-experiment'
+  appName: 'ctosdev-web-sandbox'
+  resourceGroup: 'CUS-RG-Dev-Main'
 
 stages:
 - stage: Build
   displayName: 'Build Application'
   jobs:
   - job: BuildJob
-    displayName: 'Build and package the app'
-    pool:
-      vmImage: 'ubuntu-latest'
+    displayName: 'Build and Package'
     steps:
-    # 1️⃣ Setup Node.js
-    - task: NodeTool@0
-      displayName: 'Setup Node.js'
-      inputs:
-        versionSpec: $(nodeVersion)
+      - task: NodeTool@0
+        inputs:
+          versionSpec: $(nodeVersion)
+          checkLatest: true
 
-    # 2️⃣ Install pnpm globally
-    - script: npm install -g pnpm
-      displayName: 'Install pnpm'
+      - script: |
+          npm install
+          npm run build
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+        displayName: 'Install & Build & Prepare Standalone'
 
-    # 3️⃣ Install dependencies and build with pnpm
-    - script: |
-        pnpm install
-        pnpm run build
-      displayName: 'Install dependencies and build'
+      - task: ArchiveFiles@2
+        inputs:
+          rootFolderOrFile: '.next/standalone'
+          includeRootFolder: false
+          archiveType: 'zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+          replaceExistingArchive: true
 
-    # 4️⃣ Zip the full app for deployment
-    - task: ArchiveFiles@2
-      displayName: 'Zip entire app for deployment'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
-        replaceExistingArchive: true
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)/app.zip'
+          artifact: $(buildArtifactName)
 
-    # 5️⃣ Publish the artifact
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Build Artifact'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/app.zip'
-        artifact: $(buildArtifactName)
-
-- stage: DeployDevelopment
-  displayName: 'Deploy to Development Slot'
+- stage: Deploy
+  displayName: 'Deploy to Azure Slot'
   dependsOn: Build
-  condition: succeeded()
   jobs:
   - deployment: DeployJob
-    displayName: 'Deploy to Azure Slot'
-    pool:
-      vmImage: 'ubuntu-latest'
-    environment: 'development'
+    displayName: 'Deploy to Azure App Service Slot'
+    environment: 'Development'
     strategy:
       runOnce:
         deploy:
           steps:
-          # 6️⃣ Download the build artifact
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download Build Artifact'
-            inputs:
-              artifactName: $(buildArtifactName)
-              path: '$(Pipeline.Workspace)'
+            - task: DownloadPipelineArtifact@2
+              inputs:
+                artifactName: $(buildArtifactName)
+                path: '$(Pipeline.Workspace)'
 
-          # 7️⃣ Deploy to Azure Web App Slot
-          - task: AzureWebApp@1
-            displayName: 'Deploy to Azure Web App Slot'
-            inputs:
-              azureSubscription: 'Enterprise Dev/Test'
-              appType: 'webAppLinux'
-              appName: 'ctosdev-web-sandbox'
-              slotName: 'pipeline-development-experiment'
-              package: '$(Pipeline.Workspace)/$(buildArtifactName)/app.zip'
+            - task: AzureWebApp@1
+              inputs:
+                azureSubscription: 'Enterprise Dev/Test'
+                appType: 'webAppLinux'
+                appName: $(appName)
+                package: '$(Pipeline.Workspace)/app.zip'
+                deployToSlotOrASE: true
+                resourceGroupName: $(resourceGroup)
+                slotName: $(slotName)
