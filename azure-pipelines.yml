@@ -16,6 +16,8 @@ variables:
 stages:
 - stage: Build
   displayName: 'Build Application'
+  variables:
+    - group: birukyemane.azure-pipeline-next.js
   jobs:
   - job: BuildJob
     displayName: 'Build and Package'
