@@ -1,4 +1,7 @@
-name: Build and deploy Next.js (Node 22) to Azure
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - ctosdev-web-sandbox
 
 on:
   push:
@@ -7,36 +10,46 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
 
     steps:
-      # 1️⃣ Checkout code
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node 22
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
         with:
           node-version: '22.x'
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        run: npm ci
+      - name: npm install, build, and test
+        run: |
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
-      # 4️⃣ Build the Next.js app
-      - name: Build Next.js
-        run: npm run build
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: .
 
-      # 5️⃣ Verify the build artifacts
-      - name: Verify build output
-        run: ls -la .next
-
-      # 6️⃣ Deploy full app folder to Azure
-      - name: Deploy to Azure Web App
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+      
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'ctosdev-web-sandbox'
           slot-name: 'pipeline-development-experiment'
-          package: .  # deploy everything including .next
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7BAE482963F3495D9779C157626F0369 }}
+          package: .
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_419DA314202542ED9E0CAD0E11DA30F8 }}
