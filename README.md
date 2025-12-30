@@ -2,6 +2,13 @@
 
 this is demo app for the CI/CD architecture . 
 
+It has two permanent branches main and develop. 
+
+the main branch has CI/CD pipeline and the develop branch haver PR pipeline. 
+
+to test this you can checkout the edit-read-me branch, make changes and create a PR to develop branch. 
+and then finally merge the PR to main. 
+
 
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
