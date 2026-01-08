@@ -1,6 +1,6 @@
 ## Overview 
 
-this is demo app for the CI/CD architecture . 
+this is demo app for the CI/CD architecture ..
 
 It has two permanent branches main and develop. 
 
